@@ -1,15 +1,34 @@
 import Card from "../../UI/Card/Card";
 import MealItem from "../MealItem/MealItem";
 import styles from "./AvailableMeals.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
+
+const initialState = {
+  mealsValue: [],
+  loadState: false,
+  httpError: null,
+};
+
+const mealsStateReducer = (state, action) => {
+  switch (action.type) {
+    case "MEALS_STATE":
+      return { mealsValue: action.mealsValue, loadState: action.loadState };
+    case "LOAD_ERROR":
+      return { httpError: action.httpError };
+    default:
+      return mealsStateReducer;
+  }
+};
 
 const AvailableMeals = () => {
-  const [meals, setMeals] = useState([]);
-  const [loadState, setLoadState] = useState(false);
-  const [httpError, setHttpError] = useState(null);
+  const [mealState, dispatch] = useReducer(mealsStateReducer, initialState);
+
   useEffect(() => {
     const getMeals = async () => {
-      setLoadState(true);
+      dispatch({
+        type: "MEALS_STATE",
+        loadState: true,
+      });
       const response = await fetch(
         "https://burder-builder-react.firebaseio.com/meals.json"
       );
@@ -30,17 +49,23 @@ const AvailableMeals = () => {
           price: responseData[key].price,
         });
       }
-      setMeals(mealsArr);
-      setLoadState(false);
+      dispatch({
+        type: "MEALS_STATE",
+        mealsValue: mealsArr,
+        loadState: false,
+      });
     };
 
     getMeals().catch((error) => {
-      setLoadState(false);
-      setHttpError(error.message);
+      dispatch({
+        type: "LOAD_ERROR",
+        httpError: error.message,
+        loadState: false,
+      });
     });
   }, []);
 
-  if (loadState) {
+  if (mealState.loadState) {
     return (
       <section className={styles.MealsLoading}>
         <p>Loading...</p>
@@ -48,15 +73,15 @@ const AvailableMeals = () => {
     );
   }
 
-  if (httpError) {
+  if (mealState.httpError) {
     return (
       <section className={styles.MealsError}>
-        <p>{httpError}</p>
+        <p>{mealState.httpError}</p>
       </section>
     );
   }
 
-  const mealsList = meals.map((meal, i) => (
+  const mealsList = mealState.mealsValue.map((meal, i) => (
     <MealItem
       key={i}
       id={meal.id}
