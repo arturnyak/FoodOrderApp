@@ -31,9 +31,16 @@ const Checkout = (props) => {
 
     const enteredInputsValidity =
       enteredName && enteredStreet && enteredPostal && enteredCity;
-    if (enteredInputsValidity) {
+    if (!enteredInputsValidity) {
       return;
     }
+    
+    props.onConfirm({
+      name: enteredName,
+      street: enteredStreet,
+      postal: enteredPostal,
+      city: enteredCity
+    });
   };
 
   return (
@@ -67,7 +74,7 @@ const Checkout = (props) => {
       </div>
       <div
         className={`${styles.control} ${
-          formValidity.city ? "" : styles.invalid
+          formValidity.city  ? "" : styles.invalid
         }`}
       >
         <label htmlFor="city">City</label>
